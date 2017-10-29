@@ -68,7 +68,7 @@ class BN(object):
         """
         Update the marginal and conditional counts for all RVs in the network with the specified sample.
         """
-        for rv in self.rvs:
+        for rv in self.rvs.values():
             rv.count(sample)
 
 
