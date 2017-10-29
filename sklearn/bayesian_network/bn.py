@@ -1,4 +1,5 @@
 import itertools
+import math
 
 from collections import Counter, defaultdict
 
@@ -25,6 +26,9 @@ class BN(object):
         self.parents[rv.name] = []
         rv.bn = self
 
+        # Reset counts for RV
+        rv.reset()
+
     def remove_rv(self, rv):
         """
         Remove an RV from the network.
@@ -45,6 +49,7 @@ class BN(object):
         """
         if not a == b and not self.has_edge(a, b):
             self.parents[b.name].append(a)
+            b.reset()
 
     def has_edge(self, a, b):
         """
@@ -56,7 +61,8 @@ class BN(object):
         """
         Remove an edge from ``a`` to ``b``.
         """
-        self.parents[b.name].remove(a)
+        if self.parents[b.name].remove(a):
+            b.reset()
 
     def count(self, sample):
         """
@@ -77,12 +83,9 @@ class RV(object):
         """
         self.name = name
         self.values = values
-        self.bn = None
         self.marginal = Counter()
         self.conditional = defaultdict(Counter)
-
-        # Initialize counts to zero
-        self.reset()
+        self.bn = None
 
     def reset(self):
         """
