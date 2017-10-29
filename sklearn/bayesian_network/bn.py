@@ -71,6 +71,12 @@ class BN(object):
         for rv in self.rvs.values():
             rv.count(sample)
 
+    def log_likelihood(self):
+        """
+        Return the log-likelihood for this BN based on the current RV counts.
+        """
+        return sum(rv.log_likelihood() for rv in self.rvs.values())
+
 
 class RV(object):
     """
@@ -83,6 +89,7 @@ class RV(object):
         """
         self.name = name
         self.values = values
+        # TODO: figure out terminology to use
         self.marginal = Counter()
         self.conditional = defaultdict(Counter)
         self.bn = None
@@ -117,6 +124,21 @@ class RV(object):
         Return the parent RVs of this RV.
         """
         return self.bn.parents[self.name]
+
+    def log_likelihood(self):
+        """
+        Return the log-likelihood for this RV based on the current counts.
+        """
+        total = 0
+
+        for parent_values, counts in self.conditional.items():
+            # Occurrences of parent configuration
+            parent_count = sum(counts.values())
+
+            for value, count in counts.items():
+                total += count * math.log(count / parent_count)
+
+        return total
 
     def __repr__(self):
         """
