@@ -17,6 +17,7 @@ class BN(object):
         """
         self.rvs = dict()
         self.parents = dict()
+        self.total = 0
 
     def add_rv(self, rv):
         """
@@ -71,11 +72,25 @@ class BN(object):
         for rv in self.rvs.values():
             rv.count(sample)
 
+        self.total += 1
+
     def log_likelihood(self):
         """
         Return the log-likelihood for this BN based on the current RV counts.
         """
         return sum(rv.log_likelihood() for rv in self.rvs.values())
+
+    def bic(self):
+        """
+        Return the Bayesian Information Criterion (BIC) score for this BN.
+        """
+        return self.log_likelihood() - 0.5 * math.log(self.total) * self.complexity()
+
+    def complexity(self):
+        """
+        Return the complexity of this BN. Used for penalizing more complex networks.
+        """
+        return sum((len(rv.values) - 1) * len(rv.conditional) for rv in self.rvs.values())
 
 
 class RV(object):
