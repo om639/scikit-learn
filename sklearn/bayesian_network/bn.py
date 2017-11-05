@@ -1,9 +1,3 @@
-import itertools
-import math
-
-from collections import Counter, defaultdict
-
-
 class BN(object):
     """
     Represents a Bayesian network.
@@ -17,7 +11,6 @@ class BN(object):
         """
         self.rvs = dict()
         self.parents = dict()
-        self.total = 0
 
     def add_rv(self, rv):
         """
@@ -26,9 +19,6 @@ class BN(object):
         self.rvs[rv.name] = rv
         self.parents[rv.name] = []
         rv.bn = self
-
-        # Reset counts for RV
-        rv.reset()
 
     def remove_rv(self, rv):
         """
@@ -48,9 +38,9 @@ class BN(object):
         """
         Add an edge from ``a`` to ``b``.
         """
+        # TODO: ensure new edge does not make cycle
         if not a == b and not self.has_edge(a, b):
             self.parents[b.name].append(a)
-            b.reset()
 
     def has_edge(self, a, b):
         """
@@ -62,35 +52,7 @@ class BN(object):
         """
         Remove an edge from ``a`` to ``b``.
         """
-        if self.parents[b.name].remove(a):
-            b.reset()
-
-    def count(self, sample):
-        """
-        Update the marginal and conditional counts for all RVs in the network with the specified sample.
-        """
-        for rv in self.rvs.values():
-            rv.count(sample)
-
-        self.total += 1
-
-    def log_likelihood(self):
-        """
-        Return the log-likelihood for this BN based on the current RV counts.
-        """
-        return sum(rv.log_likelihood() for rv in self.rvs.values())
-
-    def bic(self):
-        """
-        Return the Bayesian Information Criterion (BIC) score for this BN.
-        """
-        return self.log_likelihood() - 0.5 * math.log(self.total) * self.complexity()
-
-    def complexity(self):
-        """
-        Return the complexity of this BN. Used for penalizing more complex networks.
-        """
-        return sum((len(rv.values) - 1) * len(rv.conditional) for rv in self.rvs.values())
+        self.parents[b.name].remove(a)
 
 
 class RV(object):
@@ -104,34 +66,7 @@ class RV(object):
         """
         self.name = name
         self.values = values
-        # TODO: figure out terminology to use
-        self.marginal = Counter()
-        self.conditional = defaultdict(Counter)
         self.bn = None
-
-    def reset(self):
-        """
-        Reset the marginal and conditional counts for this RV to zero.
-        """
-        self.values.clear()
-        self.conditional.clear()
-
-        for value in self.values:
-            self.marginal[value] = 0
-
-        for parent_values in itertools.product(*(parent.values for parent in self.parents)):
-            for value in self.values:
-                self.conditional[parent_values][value] = 0
-
-    def count(self, sample):
-        """
-        Update the marginal and conditional counts with the specified sample.
-        """
-        # Update marginal count
-        self.marginal[sample[self.name]] += 1
-
-        # Update conditional count
-        self.conditional[tuple(sample[parent.name] for parent in self.parents)][sample[self.name]] += 1
 
     @property
     def parents(self):
@@ -139,21 +74,6 @@ class RV(object):
         Return the parent RVs of this RV.
         """
         return self.bn.parents[self.name]
-
-    def log_likelihood(self):
-        """
-        Return the log-likelihood for this RV based on the current counts.
-        """
-        total = 0
-
-        for parent_values, counts in self.conditional.items():
-            # Occurrences of parent configuration
-            parent_count = sum(counts.values())
-
-            for value, count in counts.items():
-                total += count * math.log(count / parent_count)
-
-        return total
 
     def __repr__(self):
         """
