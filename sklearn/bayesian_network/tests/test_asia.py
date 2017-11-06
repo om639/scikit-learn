@@ -1,6 +1,8 @@
 """
 Testing for Bayesian network scoring using data sampled from the Asia network.
 """
+import os
+
 from sklearn.bayesian_network import RV, BN, bic
 from sklearn.bayesian_network.tests.common import load_recarray
 from sklearn.externals.six import iteritems
@@ -23,6 +25,8 @@ ASIA_NETWORK = {'VisitToAsia': (['no', 'yes'],
                 'Dyspnea': (['no', 'yes'],
                             ['TuberculosisOrCancer', 'Bronchitis'])}
 
+ASIA_DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'asia.csv')
+
 
 def create_asia_bn():
     """Create a ``BN`` modelling the Asia network."""
@@ -38,7 +42,7 @@ def create_asia_bn():
 def test_asia_bic():
     # Test the BIC score for the Asia dataset against the correct BN
     bn = create_asia_bn()
-    data = load_recarray('data/asia.csv')
+    data = load_recarray(ASIA_DATA)
 
     # Check calculated BIC is within given tolerance of correct score
     assert_almost_equal(bic(bn, data), -22295.75)
