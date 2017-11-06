@@ -45,4 +45,4 @@ def test_asia_bic():
     data = load_recarray(ASIA_DATA)
 
     # Check calculated BIC is within given tolerance of correct score
-    assert_almost_equal(bic(bn, data), -22295.75)
+    assert_almost_equal(bic(bn, data), -22295.74566143257)
