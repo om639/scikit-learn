@@ -1,6 +1,7 @@
 """
 Representations of Bayesian networks and random variables.
 """
+from sklearn.externals.six import itervalues
 
 
 class BN(object):
@@ -51,7 +52,7 @@ class BN(object):
         del self.parents[rv.name]
 
         # Remove from any child node's parent list
-        for parent in self.parents.values():
+        for parent in itervalues(self.parents):
             try:
                 parent.remove(rv)
             except ValueError:
