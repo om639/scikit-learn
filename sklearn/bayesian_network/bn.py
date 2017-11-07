@@ -120,7 +120,7 @@ class BN(object):
                     visited.add(parent.name)
 
         # No path found
-        return True
+        return False
 
     def has_edge(self, a, b):
         """Return whether or not there exists an edge from RV ``a`` to RV ``b``
