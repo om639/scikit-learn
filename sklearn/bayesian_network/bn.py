@@ -1,6 +1,7 @@
 """
 Representations of Bayesian networks and random variables.
 """
+from collections import deque
 from sklearn.externals.six import itervalues
 
 
@@ -79,11 +80,47 @@ class BN(object):
         -------
         ``true`` if the new edge was successfully added, ``false`` otherwise.
         """
-        # TODO: ensure new edge does not make cycle
-        if not a == b and not self.has_edge(a, b):
+        if not self.has_edge(a, b) and not self._causes_cycle(a, b):
             self.parents[b.name].append(a)
             return True
         return False
+
+    @staticmethod
+    def _causes_cycle(a, b):
+        """Return whether or not a new edge from RV ``a`` to RV ``b`` would
+        cause a cycle in the network.
+
+        Parameters
+        ----------
+        a : ``RV``
+            The random variable to test from.
+
+        b : ``RV``
+            The random variable to test to.
+
+        Returns
+        -------
+        ``true`` if the new edge would cause a cycle, ``false`` otherwise.
+        """
+        # No loops
+        if a == b:
+            return True
+
+        current = deque([a])
+        visited = {a.name}
+
+        # Do BFS to check for path
+        while current:
+            for parent in current.popleft().parents:
+                if parent == b:
+                    # Path found
+                    return True
+                if parent.name not in visited:
+                    current.append(parent)
+                    visited.add(parent.name)
+
+        # No path found
+        return True
 
     def has_edge(self, a, b):
         """Return whether or not there exists an edge from RV ``a`` to RV ``b``
@@ -99,7 +136,7 @@ class BN(object):
 
         Returns
         -------
-        ``true`` if there is an edge from ``a`` to ``b``, false otherwise.
+        ``true`` if there is an edge from ``a`` to ``b``, ``false`` otherwise.
         """
         return a in self.parents[b.name]
 
