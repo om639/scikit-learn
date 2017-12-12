@@ -3,7 +3,7 @@ Testing for Bayesian network scoring using data sampled from the ALARM network.
 """
 import os
 
-from sklearn.bayesian_network import RV, BN, bic
+from sklearn.bayesian_network import RV, BN, bic, Network, Variable, load_discrete
 from sklearn.bayesian_network.tests.common import load_recarray
 from sklearn.externals.six import iteritems
 from sklearn.utils.testing import assert_almost_equal
@@ -87,7 +87,7 @@ ALARM_DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'a
 
 
 def create_alarm_bn():
-    """Create a ``BN`` modelling the Asia network."""
+    """Create a ``BN`` modelling the ALARM network."""
     bn = BN()
     for name, (values, _) in iteritems(ALARM_NETWORK):
         bn.add_rv(RV(name, values))
@@ -95,6 +95,17 @@ def create_alarm_bn():
         for parent in parents:
             bn.add_edge(bn.rvs[parent], bn.rvs[name])
     return bn
+
+
+def create_alarm_network():
+    """Create a ``Network`` modelling the ALARM network."""
+    n = Network(Variable(name, values) for name, (values, _) in iteritems(ALARM_NETWORK))
+
+    # Add edges
+    for name, (_, parents) in iteritems(ALARM_NETWORK):
+        for parent in parents:
+            n.add_edge(n.variable_index(parent), n.variable_index(name))
+    return n
 
 
 def test_alarm_bic():
