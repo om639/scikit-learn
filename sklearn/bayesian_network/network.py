@@ -114,7 +114,7 @@ class Network(object):
 
         # Do BFS to check for path
         while current:
-            for i in self.parents(current.popleft()):
+            for i in self.parent_indices(current.popleft()):
                 if i == b:
                     return True
                 if i not in visited:
@@ -149,7 +149,7 @@ class Network(object):
         """
         return self._variable_indices[name]
 
-    def parents(self, i):
+    def parent_indices(self, i):
         """Return the indices of the parent variables of the specified variable
         index.
 
@@ -237,8 +237,22 @@ class Variable(object):
         parents : generator of ``Variable``
             The parent variables of the variable.
         """
-        return (self._network.variables[i] for i in
-                self._network.parents(self.index))
+        return (self._network.variables[i] for i in self.parent_indices)
+
+    @property
+    def parent_indices(self):
+        """Return the indices of the parent variables of this variable in the
+        network.
+
+        If this variable is not attached to a ``Network``, this property raises
+        an AttribueError.
+
+        Returns
+        -------
+        parent_indices : ``numpy.array``
+            The indices of the parent variables of the variable.
+        """
+        return self._network.parent_indices(self.index)
 
     @property
     def values(self):

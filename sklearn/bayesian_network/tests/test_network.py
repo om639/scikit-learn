@@ -13,12 +13,12 @@ def test_add_remove_edge():
 
     # Add edge and test
     n.add_edge(a.index, b.index)
-    assert_in(a.index, n.parents(b.index))
+    assert_in(a.index, n.parent_indices(b.index))
     assert_in(a, b.parents)
 
     # Remove edge and test
     n.remove_edge(a.index, b.index)
-    assert_not_in(a.index, n.parents(b.index))
+    assert_not_in(a.index, n.parent_indices(b.index))
     assert_not_in(a, b.parents)
 
 
