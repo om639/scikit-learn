@@ -10,7 +10,7 @@ from collections import Counter, defaultdict
 from sklearn.externals.six import iteritems, itervalues
 
 
-def log_likelihood(network, data):
+def ll(network, data):
     """Computer the log-likelihood for the given network with respect to the
     given data.
 
@@ -24,20 +24,37 @@ def log_likelihood(network, data):
 
     Returns
     -------
-    log_likelihood : float
+    ll : float
         The log-likelihood of ``network`` given ``data``.
     """
-    return sum(_log_likelihood_variable(v, data) for v in network.variables)
+    return sum(ll_variable(v, data) for v in network.variables)
 
 
-def _log_likelihood_variable(variable, data):
-    """Return the log-likelihood for a ``Variable`` for the specified data."""
-    ll = 0
+def ll_variable(variable, data):
+    """Computer the log-likelihood for the given variable with respect to the
+    given data. The variable must be attached to some ``Network``.
+
+    Parameters
+    ----------
+    variable : ``Variable``
+        The variable to compute the log-likelihood for.
+
+    data : ``numpy.array``
+        The data to use when computing the log-likelihood. The data columns must
+        be in the same order as the variables in the network.
+
+    Returns
+    -------
+    ll_variable : float
+        The log-likelihood of ``variable`` given ``data``.
+    """
+    # TODO: integrate _counts into this function
+    lv = 0
     for count_key, counts in iteritems(_counts(variable, data)):
         parent_count = sum(itervalues(counts))
         for value, count in iteritems(counts):
-            ll += count * math.log(count / parent_count)
-    return ll
+            lv += count * math.log(count / parent_count)
+    return lv
 
 
 def _counts(variable, data):
@@ -76,17 +93,4 @@ def bic(network, data):
     bic : float
         The BIC score for ``network`` given ``data``.
     """
-    ll = log_likelihood(network, data)
-
-    # Apply penalization
-    return ll - 0.5 * math.log(len(data)) * _dim(network)
-
-
-def _dim(n):
-    """Return the dimension for the given ``Network``."""
-    return sum(_dim_variable(v) for v in n.variables)
-
-
-def _dim_variable(v):
-    """Return the dimension for the given ``Variable``."""
-    return np.prod([len(p.values) for p in v.parents]) * (len(v.values) - 1)
+    return ll(network, data) - 0.5 * math.log(len(data)) * network.dimension

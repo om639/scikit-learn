@@ -124,6 +124,17 @@ class Network(object):
         return False
 
     @property
+    def dimension(self):
+        """Return the sum of the dimensions of all variables in this network.
+
+        Returns
+        -------
+        dimension : int
+            The sum of dimensions for all variables in the network.
+        """
+        return sum(variable.dimension for variable in self.variables)
+
+    @property
     def variables(self):
         """Return the variables that are part of this network.
 
@@ -201,6 +212,21 @@ class Variable(object):
         self._network = network
 
     @property
+    def dimension(self):
+        """Return the dimension of this variable.
+
+        If this variable is not attached to a ``Network``, this property raises
+        an AttributeError.
+
+        Returns
+        -------
+        dimension : int
+            The dimension of the variable.
+        """
+        p = np.prod(np.array([len(parent.values) for parent in self.parents]))
+        return p * (len(self.values) - 1)
+
+    @property
     def index(self):
         """Return the index of this variable in the network.
 
@@ -245,7 +271,7 @@ class Variable(object):
         network.
 
         If this variable is not attached to a ``Network``, this property raises
-        an AttribueError.
+        an AttributeError.
 
         Returns
         -------
