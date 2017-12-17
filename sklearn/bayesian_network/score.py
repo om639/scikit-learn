@@ -6,8 +6,7 @@ from __future__ import division
 import math
 import numpy as np
 
-from collections import Counter, defaultdict
-from sklearn.externals.six import iteritems, itervalues
+from collections import Counter
 
 
 def ll(network, data):
@@ -48,32 +47,22 @@ def ll_variable(variable, data):
     ll_variable : float
         The log-likelihood of ``variable`` given ``data``.
     """
-    # TODO: integrate _counts into this function
-    lv = 0
-    for count_key, counts in iteritems(_counts(variable, data)):
-        parent_count = sum(itervalues(counts))
-        for value, count in iteritems(counts):
-            lv += count * math.log(count / parent_count)
-    return lv
-
-
-def _counts(variable, data):
     """Return the parent configuration counts for a single ``Variable``."""
     # Select only the relevant columns
     ar = data[:, np.insert(variable.parent_indices, 0, variable.index)]
+    ar = np.ascontiguousarray(ar)
 
     # Convert each row into a single value and identify unique values
-    ar = np.ascontiguousarray(ar)
     av = ar.view(np.dtype((np.void, ar.dtype.itemsize * ar.shape[1])))
     _, indices, counts = np.unique(av, return_index=True, return_counts=True)
 
-    # Create dict from resulting unique counts
-    counter = defaultdict(Counter)
+    # Count total occurrences of each parent configuration
+    parent_counts = Counter()
     for index, count in zip(indices, counts):
-        pk = tuple(ar[index, 1:])
-        ck = ar[index, 0]
-        counter[pk][ck] = count
-    return counter
+        parent_counts[tuple(ar[index, 1:])] += count
+
+    return sum(count * math.log(count / parent_counts[tuple(ar[index, 1:])])
+               for index, count in zip(indices, counts))
 
 
 def bic(network, data):
