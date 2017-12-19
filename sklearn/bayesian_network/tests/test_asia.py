@@ -1,10 +1,9 @@
 """
 Testing for Bayesian network scoring using data sampled from the Asia network.
 """
-import math
 import os
 
-from sklearn.bayesian_network import Network, Variable, bic, ll_variable, \
+from sklearn.bayesian_network import Network, Variable, bic_network, \
     load_discrete
 from sklearn.externals.six import iteritems
 from sklearn.utils.testing import assert_almost_equal
@@ -45,21 +44,4 @@ def test_asia_bic():
     data = load_discrete(ASIA_DATA, network)
 
     # Check calculated BIC is within given tolerance of correct score
-    assert_almost_equal(bic(network, data), -22295.74566143257)
-
-
-def test_asia_decomposable():
-    # Test that adding together the score for all variables results in the same score for the entire network
-    network = create_asia_network()
-    data = load_discrete(ASIA_DATA, network)
-
-    # Compute log-likelihood for each variable
-    ll = 0
-    dimension = 0
-    for variable in network.variables:
-        ll += ll_variable(variable, data)
-        dimension += variable.dimension
-
-    # Compare with real score and score provided by bic function
-    assert_almost_equal(ll - 0.5 * math.log(len(data)) * dimension, -22295.74566143257)
-    assert_almost_equal(ll - 0.5 * math.log(len(data)) * dimension, bic(network, data))
+    assert_almost_equal(bic_network(network, data), -22295.74566143257)

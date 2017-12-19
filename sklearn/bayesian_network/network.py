@@ -3,7 +3,6 @@ Representations of Bayesian networks and random variables.
 """
 import numpy as np
 from collections import deque
-from scipy.sparse import lil_matrix
 
 
 class Network(object):
@@ -29,8 +28,8 @@ class Network(object):
 
         n = len(self.variables)
 
-        # Store edges as sparse adjacency matrix
-        self._parents = lil_matrix((n, n), dtype=np.int32)
+        # Store edges as adjacency matrix
+        self._parents = np.zeros((n, n), dtype=np.bool)
 
     def add_edge(self, a, b):
         """Add an edge from variable ``a`` to ``b``.
@@ -49,7 +48,7 @@ class Network(object):
         b : int
             The index of the variable to which the new edge should be added.
         """
-        if self._causes_cycle(a, b):
+        if self.causes_cycle(a, b):
             raise ValueError('new edge would cause a cycle')
 
         self._parents[b, a] = 1
@@ -89,7 +88,7 @@ class Network(object):
         """
         return self._parents[b, a] != 0
 
-    def _causes_cycle(self, a, b):
+    def causes_cycle(self, a, b):
         """Return whether or not a new edge from variable ``a`` to ``b`` would
         cause a cycle in the network.
 
@@ -103,7 +102,7 @@ class Network(object):
 
         Returns
         -------
-        _causes_cycle : bool
+        causes_cycle : bool
             True if the new edge would cause a cycle, False otherwise.
         """
         if a == b:
@@ -171,11 +170,28 @@ class Network(object):
 
         Returns
         -------
-        parents : ``numpy.array``
+        parent_indices : ``numpy.array``
             The indices of the parent variables of the specified variable.
         """
-        _, parents = self._parents[i].nonzero()
+        parents, = np.nonzero(self._parents[i])
         return parents
+
+    def not_parent_indices(self, i):
+        """Return the indices of the variables that are NOT parents of the
+        specified variable.
+
+        Parameters
+        ----------
+        i : int
+            The index of the variable to return the non-parent indices of.
+
+        Returns
+        -------
+        not_parent_indices : ``numpy.array``
+            The indices of the non-parent variables of the specified variable.
+        """
+        non_parents, = np.where(self._parents[i] == 0)
+        return non_parents
 
 
 class Variable(object):
@@ -266,6 +282,21 @@ class Variable(object):
         return (self._network.variables[i] for i in self.parent_indices)
 
     @property
+    def not_parents(self):
+        """
+        Return the non-parent variables of this variable in the network.
+
+        If this variable is not attached to a ``Network``, this property raises
+        an AttributeError.
+
+        Returns
+        -------
+        not_parents : generator of ``Variable``
+            The non-parent variables of the variable.
+        """
+        return (self._network.variables[i] for i in self.not_parent_indices)
+
+    @property
     def parent_indices(self):
         """Return the indices of the parent variables of this variable in the
         network.
@@ -279,6 +310,21 @@ class Variable(object):
             The indices of the parent variables of the variable.
         """
         return self._network.parent_indices(self.index)
+
+    @property
+    def not_parent_indices(self):
+        """Return the indices of the variables that are NOT parents of this
+        variable in the network.
+
+        If this variable is not attached to a ``Network``, this property raises
+        an AttributeError.
+
+        Returns
+        -------
+        not_parent_indices : ``numpy.array``
+            The indices of the non-parent variables of the variable.
+        """
+        return self._network.not_parent_indices(self.index)
 
     @property
     def values(self):

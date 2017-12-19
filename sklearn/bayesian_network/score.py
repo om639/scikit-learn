@@ -9,27 +9,7 @@ import numpy as np
 from collections import Counter
 
 
-def ll(network, data):
-    """Computer the log-likelihood for the given network with respect to the
-    given data.
-
-    Parameters
-    ----------
-    network : ``Network``
-        The network to compute the log-likelihood for.
-
-    data : ``numpy.array``
-        The data to use when computing the log-likelihood.
-
-    Returns
-    -------
-    ll : float
-        The log-likelihood of ``network`` given ``data``.
-    """
-    return sum(ll_variable(v, data) for v in network.variables)
-
-
-def ll_variable(variable, data):
+def ll(variable, data, parents=None):
     """Computer the log-likelihood for the given variable with respect to the
     given data. The variable must be attached to some ``Network``.
 
@@ -42,14 +22,20 @@ def ll_variable(variable, data):
         The data to use when computing the log-likelihood. The data columns must
         be in the same order as the variables in the network.
 
+    parents : ``numpy.array``
+        The indices of the parent variables to use for the variable. If None,
+        the variable's parent indices from the network are used.
+
     Returns
     -------
-    ll_variable : float
+    ll : float
         The log-likelihood of ``variable`` given ``data``.
     """
-    """Return the parent configuration counts for a single ``Variable``."""
+    if parents is None:
+        parents = variable.parent_indices
+
     # Select only the relevant columns
-    ar = data[:, np.insert(variable.parent_indices, 0, variable.index)]
+    ar = data[:, np.insert(parents, 0, variable.index)]
     ar = np.ascontiguousarray(ar)
 
     # Convert each row into a single value and identify unique values
@@ -65,7 +51,55 @@ def ll_variable(variable, data):
                for index, count in zip(indices, counts))
 
 
-def bic(network, data):
+def ll_network(network, data):
+    """Computer the log-likelihood for the given network with respect to the
+    given data.
+
+    Parameters
+    ----------
+    network : ``Network``
+        The network to compute the log-likelihood for.
+
+    data : ``numpy.array``
+        The data to use when computing the log-likelihood. The data columns must
+        be in the same order as the variables in the network.
+
+    Returns
+    -------
+    ll_network : float
+        The log-likelihood of ``network`` given ``data``.
+    """
+    return sum(ll(v, data) for v in network.variables)
+
+
+def bic(variable, data, parents=None):
+    """Compute the Bayesian Information Criterion (BIC) score for the given
+    variable with respect to the given data. The variable must be attached to
+    some ``Network``.
+
+    Parameters
+    ----------
+    variable : ``Variable``
+        The variable to compute the score for.
+
+    data : ``numpy.array``
+        The data to use when computing the score. The data columns must be in
+        the same order as the variables in the network.
+
+    parents : ``numpy.array``
+        The indices of the parent variables to use for the variable. If None,
+        the variable's parent indices from the network are used.
+
+    Returns
+    -------
+    bic : float
+        The BIC score for ``variable`` given ``data``.
+    """
+    s = ll(variable, data, parents=parents)
+    return s - 0.5 * math.log(len(data)) * variable.dimension
+
+
+def bic_network(network, data):
     """Compute the Bayesian Information Criterion (BIC) score for the given
     network with respect to the given data.
 
@@ -75,11 +109,12 @@ def bic(network, data):
         The network to compute the score for.
 
     data : ``numpy.array``
-        The data to use when computing the score.
+        The data to use when computing the score. The data columns must be in
+        the same order as the variables in the network.
 
     Returns
     -------
-    bic : float
+    bic_network : float
         The BIC score for ``network`` given ``data``.
     """
-    return ll(network, data) - 0.5 * math.log(len(data)) * network.dimension
+    return sum(bic(variable, data) for variable in network.variables)
