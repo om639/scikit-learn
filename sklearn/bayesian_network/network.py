@@ -3,6 +3,7 @@ Representations of Bayesian networks and random variables.
 """
 import numpy as np
 from collections import deque
+from sklearn.externals.six import string_types
 
 
 class Network(object):
@@ -88,7 +89,7 @@ class Network(object):
         """
         return self._parents[b, a] != 0
 
-    def causes_cycle(self, a, b):
+    def causes_cycle(self, a, b, reversal=False):
         """Return whether or not a new edge from variable ``a`` to ``b`` would
         cause a cycle in the network.
 
@@ -99,6 +100,10 @@ class Network(object):
 
         b : int
             The index of the variable to test to.
+
+        reversal : bool
+            True to ignore an existing arc from ``b`` to ``a`` when checking for
+            cycles. Used to check whether an arc can be reversed.
 
         Returns
         -------
@@ -113,12 +118,16 @@ class Network(object):
 
         # Do BFS to check for path
         while current:
-            for i in self.parent_indices(current.popleft()):
-                if i == b:
+            v = current.popleft()
+            for p in self.parent_indices(v):
+                if reversal and v == a and p == b:
+                    # If reversing, pretend arc doesn't exist
+                    continue
+                if p == b:
                     return True
-                if i not in visited:
-                    current.append(i)
-                    visited.add(i)
+                if p not in visited:
+                    current.append(p)
+                    visited.add(p)
 
         return False
 
@@ -193,6 +202,17 @@ class Network(object):
         non_parents, = np.where(self._parents[i] == 0)
         return non_parents
 
+    def __getitem__(self, item):
+        if isinstance(item, string_types):
+            return self._variables[self._variable_indices[item]]
+        return self._variables[item]
+
+    def __iter__(self):
+        return iter(self._variables)
+
+    def __len__(self):
+        return len(self._variables)
+
 
 class Variable(object):
     """Represents a discrete random variable in a Bayesian network.
@@ -247,7 +267,7 @@ class Variable(object):
         if parents is None:
             parents = self.parent_indices
 
-        a = np.array([len(self._network.variables[i].values) for i in parents])
+        a = np.array([len(self._network[i].values) for i in parents])
         return np.prod(a) * (len(self.values) - 1)
 
     @property
@@ -287,7 +307,7 @@ class Variable(object):
         parents : generator of ``Variable``
             The parent variables of the variable.
         """
-        return (self._network.variables[i] for i in self.parent_indices)
+        return (self._network[i] for i in self.parent_indices)
 
     @property
     def not_parents(self):
@@ -302,7 +322,7 @@ class Variable(object):
         not_parents : generator of ``Variable``
             The non-parent variables of the variable.
         """
-        return (self._network.variables[i] for i in self.not_parent_indices)
+        return (self._network[i] for i in self.not_parent_indices)
 
     @property
     def parent_indices(self):
@@ -365,8 +385,8 @@ class Variable(object):
                 and self._name == other._name
                 and self._values == other._values)
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     def __hash__(self):
         return hash((self.name, self.values))
+
+    def __ne__(self, other):
+        return not self.__eq__(other)

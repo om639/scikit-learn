@@ -31,6 +31,15 @@ def test_add_edge_cycle():
         n.add_edge(2, 0)
 
 
+def test_reverse_edge_cycle():
+    # Test causes_cycle works when using reverse=True
+    n = Network([Variable('test_{}'.format(i), ['false', 'true']) for i in range(3)])
+    n.add_edge(0, 1)
+    n.add_edge(0, 2)
+    n.add_edge(1, 2)
+    assert_true(n.causes_cycle(2, 0, reversal=True))
+
+
 def test_has_edge():
     # Test that Network.has_edge works as expected
     a = Variable('test_a', ['false', 'true'])

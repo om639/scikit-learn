@@ -69,7 +69,7 @@ def ll_network(network, data):
     ll_network : float
         The log-likelihood of ``network`` given ``data``.
     """
-    return sum(ll(v, data) for v in network.variables)
+    return sum(ll(v, data) for v in network)
 
 
 def bic(variable, data, parents=None):
@@ -117,4 +117,4 @@ def bic_network(network, data):
     bic_network : float
         The BIC score for ``network`` given ``data``.
     """
-    return sum(bic(variable, data) for variable in network.variables)
+    return sum(bic(variable, data) for variable in network)

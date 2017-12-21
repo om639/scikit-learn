@@ -41,6 +41,6 @@ def load_discrete(file, network):
     with open(file) as csvfile:
         reader = csv.DictReader(csvfile)
         rows = [[variable.value_index(row[variable.name])
-                 for variable in network.variables] for row in reader]
+                 for variable in network] for row in reader]
 
     return np.array(rows, dtype=np.int32)
