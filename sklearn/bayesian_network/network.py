@@ -227,20 +227,28 @@ class Variable(object):
         """
         self._network = network
 
-    @property
-    def dimension(self):
+    def dimension(self, parents=None):
         """Return the dimension of this variable.
 
         If this variable is not attached to a ``Network``, this property raises
         an AttributeError.
+
+        Parameters
+        ----------
+        parents : ``numpy.array``
+            The indices of the parent variables to use for the variable. If
+            None, the variable's parent indices from the network are used.
 
         Returns
         -------
         dimension : int
             The dimension of the variable.
         """
-        p = np.prod(np.array([len(parent.values) for parent in self.parents]))
-        return p * (len(self.values) - 1)
+        if parents is None:
+            parents = self.parent_indices
+
+        a = np.array([len(self._network.variables[i].values) for i in parents])
+        return np.prod(a) * (len(self.values) - 1)
 
     @property
     def index(self):

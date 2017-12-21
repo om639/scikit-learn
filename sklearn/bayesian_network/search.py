@@ -68,15 +68,24 @@ def maximize_removal(network, data, scores):
     delta : float
         The increase in score resulting from removing the edge.
 
-    (from, to) : tuple of (int, int)
+    (from, to) : tuple of (int, int), or None
         The indices of the variables from and to which removing an edge
-        maximizes the score increase.
+        maximizes the score increase. If no edges result in a score increase,
+        None.
     """
+    max_delta = 0
+    max_edge = None
     for b, variable in enumerate(network.variables):
         for a in variable.parent_indices:
-            # Remove edge from a to b
-            # TODO: implement me
-            pass
+            # Calculate the score as if edge from a to b has been removed
+            parents = variable.parent_indices[variable.parent_indices != a]
+            delta = bic(variable, data, parents=parents) - scores[b]
+
+            # Check if best solution
+            if delta > max_delta:
+                max_edge = (a, b)
+                max_delta = delta
+    return max_delta, max_edge
 
 
 def maximize_reversal(network, data, scores):

@@ -96,7 +96,7 @@ def bic(variable, data, parents=None):
         The BIC score for ``variable`` given ``data``.
     """
     s = ll(variable, data, parents=parents)
-    return s - 0.5 * math.log(len(data)) * variable.dimension
+    return s - 0.5 * math.log(len(data)) * variable.dimension(parents=parents)
 
 
 def bic_network(network, data):
