@@ -4,7 +4,7 @@ Hill-climbing structure learning for Bayesian networks.
 from sklearn.bayesian_network.score import score
 
 
-def maximize_addition(network, data, scores):
+def maximize_addition(network, data, scores, cache=None):
     """Find the edge addition that will result in the largest score increase in
     the specified network.
 
@@ -19,6 +19,9 @@ def maximize_addition(network, data, scores):
     scores : ``numpy.array``
         The current scores for each variable in the network.
 
+    cache : dict of int to (dict of tuple to float)
+        The score cache to use. If None, do not use a cache.
+
     Returns
     -------
     delta : float
@@ -28,7 +31,6 @@ def maximize_addition(network, data, scores):
         The indices of the variables from and to which adding an edge maximizes
         the score increase. If no edges result in a score increase, None.
     """
-    cache = {}
     max_delta = 0
     max_edge = None
     for b, variable in enumerate(network):
@@ -49,7 +51,7 @@ def maximize_addition(network, data, scores):
     return max_delta, max_edge
 
 
-def maximize_removal(network, data, scores):
+def maximize_removal(network, data, scores, cache=None):
     """Find the edge removal that will result in the largest score increase in
     the specified network.
 
@@ -64,6 +66,9 @@ def maximize_removal(network, data, scores):
     scores : ``numpy.array``
         The current scores for each variable in the network.
 
+    cache : dict of int to (dict of tuple to float)
+        The score cache to use. If None, do not use a cache.
+
     Returns
     -------
     delta : float
@@ -74,7 +79,6 @@ def maximize_removal(network, data, scores):
         maximizes the score increase. If no edges result in a score increase,
         None.
     """
-    cache = {}
     max_delta = 0
     max_edge = None
     for b, variable in enumerate(network):
@@ -90,7 +94,7 @@ def maximize_removal(network, data, scores):
     return max_delta, max_edge
 
 
-def maximize_reversal(network, data, scores):
+def maximize_reversal(network, data, scores, cache=None):
     """Find the edge reversal that will result in the largest score increase in
     the specified network.
 
@@ -105,6 +109,9 @@ def maximize_reversal(network, data, scores):
     scores : ``numpy.array``
         The current scores for each variable in the network.
 
+    cache : dict of int to (dict of tuple to float)
+        The score cache to use. If None, do not use a cache.
+
     Returns
     -------
     (delta_from, delta_to) : float
@@ -115,7 +122,6 @@ def maximize_reversal(network, data, scores):
         maximizes the score increase. If no edges result in a score increase,
         None.
     """
-    cache = {}
     max_delta = (0, 0)
     max_delta_sum = 0
     max_edge = None
