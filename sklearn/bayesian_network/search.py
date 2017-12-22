@@ -1,9 +1,7 @@
 """
 Hill-climbing structure learning for Bayesian networks.
 """
-import numpy as np
-
-from sklearn.bayesian_network.score import bic
+from sklearn.bayesian_network.score import score
 
 
 def maximize_addition(network, data, scores):
@@ -30,6 +28,7 @@ def maximize_addition(network, data, scores):
         The indices of the variables from and to which adding an edge maximizes
         the score increase. If no edges result in a score increase, None.
     """
+    cache = {}
     max_delta = 0
     max_edge = None
     for b, variable in enumerate(network):
@@ -40,8 +39,8 @@ def maximize_addition(network, data, scores):
                 continue
 
             # Calculate the score as if an edge has been added from a to b
-            parents = np.append(variable.parent_indices, a)
-            delta = bic(variable, data, parents=parents) - scores[b]
+            delta = score(variable, data, parent_include=a,
+                          cache=cache) - scores[b]
 
             # Check if best solution
             if delta > max_delta:
@@ -75,13 +74,14 @@ def maximize_removal(network, data, scores):
         maximizes the score increase. If no edges result in a score increase,
         None.
     """
+    cache = {}
     max_delta = 0
     max_edge = None
     for b, variable in enumerate(network):
         for a in variable.parent_indices:
             # Calculate the score as if edge from a to b has been removed
-            parents = variable.parent_indices[variable.parent_indices != a]
-            delta = bic(variable, data, parents=parents) - scores[b]
+            delta = score(variable, data, parent_exclude=a,
+                          cache=cache) - scores[b]
 
             # Check if best solution
             if delta > max_delta:
@@ -115,6 +115,7 @@ def maximize_reversal(network, data, scores):
         maximizes the score increase. If no edges result in a score increase,
         None.
     """
+    cache = {}
     max_delta = (0, 0)
     max_delta_sum = 0
     max_edge = None
@@ -122,10 +123,10 @@ def maximize_reversal(network, data, scores):
         for a in variable.parent_indices:
             if network.causes_cycle(b, a, reversal=True):
                 continue
-            parents_a = np.append(network[a].parent_indices, b)
-            parents_b = variable.parent_indices[variable.parent_indices != a]
-            delta = (bic(network[a], data, parents=parents_a) - scores[a],
-                     bic(variable, data, parents=parents_b) - scores[b])
+            delta = (score(network[a], data, parent_include=b,
+                           cache=cache) - scores[a],
+                     score(variable, data, parent_exclude=a,
+                           cache=cache) - scores[b])
             delta_sum = sum(delta)
 
             # Check if best solution

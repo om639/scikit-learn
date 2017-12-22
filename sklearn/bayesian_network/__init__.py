@@ -3,5 +3,5 @@ The :mod:`sklearn.bayesian_network` module implements Bayesian network structure
 """
 from .loader import load_discrete
 from .network import Network, Variable
-from .score import bic, bic_network, ll, ll_network
+from .score import bic, bic_network, ll, ll_network, score
 from .search import maximize_addition, maximize_removal, maximize_reversal
