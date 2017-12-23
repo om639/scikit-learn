@@ -1,10 +1,68 @@
 """
 Hill-climbing structure learning for Bayesian networks.
 """
+import numpy as np
+
+from operator import itemgetter
 from sklearn.bayesian_network.score import score
 
+_OP_ADD = 0
+_OP_REMOVE = 1
+_OP_REVERSE = 2
 
-def maximize_addition(network, data, scores, cache=None):
+
+def hc(network, data):
+    """Perform hill-climbing search on the specified network using the given
+    data. The network is modified in-place.
+
+    Parameters
+    ----------
+    network : ``Network``
+        The network to learn the structure for.
+
+    data : ``numpy.array``
+        The data to use for learning.
+
+    Returns
+    -------
+    hc : float
+        The increase in network score resulting from performing hill-climbing
+        search.
+    """
+    scores = np.array([score(variable, data) for variable in network])
+    score_initial = np.sum(scores)
+
+    # Use a cache to speed up computation
+    cache = {}
+    while True:
+        ops = [(_OP_ADD, *max_add(network, data, scores, cache=cache)),
+               (_OP_REMOVE, *max_remove(network, data, scores, cache=cache)),
+               (_OP_REVERSE, *max_reverse(network, data, scores, cache=cache))]
+        # noinspection PyTypeChecker
+        op, delta, *rest = max(ops, key=itemgetter(1))
+
+        # If no improvement, abort
+        if not delta:
+            break
+
+        # Apply op to network
+        if op in (_OP_ADD, _OP_REMOVE):
+            edge, = rest
+            scores[edge[1]] += delta
+            if op == _OP_ADD:
+                network.add_edge(*edge)
+            else:
+                network.remove_edge(*edge)
+        elif op == _OP_REVERSE:
+            deltas, edge = rest
+            scores[edge[0]] += deltas[0]
+            scores[edge[1]] += deltas[1]
+            network.remove_edge(*edge)
+            network.add_edge(*reversed(edge))
+    return np.sum(scores) - score_initial
+
+
+def max_add(network, data, scores, cache=None):
     """Find the edge addition that will result in the largest score increase in
     the specified network.
 
@@ -51,7 +109,7 @@ def maximize_addition(network, data, scores, cache=None):
     return max_delta, max_edge
 
 
-def maximize_removal(network, data, scores, cache=None):
+def max_remove(network, data, scores, cache=None):
     """Find the edge removal that will result in the largest score increase in
     the specified network.
 
@@ -94,7 +152,7 @@ def maximize_removal(network, data, scores, cache=None):
     return max_delta, max_edge
 
 
-def maximize_reversal(network, data, scores, cache=None):
+def max_reverse(network, data, scores, cache=None):
     """Find the edge reversal that will result in the largest score increase in
     the specified network.
 
@@ -114,8 +172,12 @@ def maximize_reversal(network, data, scores, cache=None):
 
     Returns
     -------
+    delta : float
+        The total increase in score resulting from reversing the edge.
+
     (delta_from, delta_to) : float
-        The increase in score resulting from reversing the edge.
+        The increase and decrease in respective scores resulting from reversing
+        the edge.
 
     (from, to) : tuple of (int, int)
         The indices of the variables from and to which reversing an edge
@@ -140,4 +202,4 @@ def maximize_reversal(network, data, scores, cache=None):
                 max_delta = delta
                 max_delta_sum = delta_sum
                 max_edge = (a, b)
-    return max_delta, max_edge
+    return max_delta_sum, max_delta, max_edge

@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 from sklearn.bayesian_network import Network, Variable, bic, bic_network, \
-    load_discrete, maximize_addition, maximize_removal, maximize_reversal
+    load_discrete, max_add, max_remove, max_reverse
 from sklearn.externals.six import iteritems
 from sklearn.utils.testing import assert_almost_equal, assert_equal, assert_greater
 
@@ -48,8 +48,8 @@ def test_asia_bic():
     assert_almost_equal(bic_network(network, data), -22295.74566143257)
 
 
-def test_asia_addition():
-    # Test that maximize_addition returns the correct edge to add in a near-correct Asia network
+def test_asia_add():
+    # Test that max_add returns the correct edge to add in a near-correct Asia network
     network = create_asia_network()
     data = load_discrete(ASIA_DATA, network)
 
@@ -59,13 +59,13 @@ def test_asia_addition():
     scores = np.array([bic(variable, data) for variable in network])
 
     # Check the new edge to add is the same as the one we just removed
-    delta, edge_add = maximize_addition(network, data, scores)
+    delta, edge_add = max_add(network, data, scores)
     assert_equal(edge_add, edge)
     assert_greater(delta, 0)
 
 
-def test_asia_removal():
-    # Test that maximize_removal returns the correct edge to remove in a near-correct Asia network
+def test_asia_remove():
+    # Test that max_remove returns the correct edge to remove in a near-correct Asia network
     network = create_asia_network()
     data = load_discrete(ASIA_DATA, network)
 
@@ -75,13 +75,13 @@ def test_asia_removal():
     scores = np.array([bic(variable, data) for variable in network])
 
     # Check the edge to remove is the same as the one we just added
-    delta, edge_add = maximize_removal(network, data, scores)
+    delta, edge_add = max_remove(network, data, scores)
     assert_equal(edge_add, edge)
     assert_greater(delta, 0)
 
 
-def test_asia_reversal():
-    # Test that maximize_reversal returns the correct edge to reverse in a near-correct Asia network
+def test_asia_reverse():
+    # Test that max_reverse returns the correct edge to reverse in a near-correct Asia network
     network = create_asia_network()
     data = load_discrete(ASIA_DATA, network)
 
@@ -92,6 +92,6 @@ def test_asia_reversal():
     scores = np.array([bic(variable, data) for variable in network])
 
     # Check the new edge to add
-    delta, edge_add = maximize_reversal(network, data, scores)
+    delta_total, delta, edge_add = max_reverse(network, data, scores)
     assert_equal(edge_add, edge[::-1])
-    assert_greater(sum(delta), 0)
+    assert_greater(delta_total, 0)
