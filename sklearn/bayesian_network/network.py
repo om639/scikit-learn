@@ -202,6 +202,22 @@ class Network(object):
         non_parents, = np.where(self._parents[i] == 0)
         return non_parents
 
+    def __str__(self):
+        """Return a string representation of the structure of this network. The
+        resulting string representation can then be used with bnlearn.
+
+        The string returned by this method will be in the format of
+        ``[A][B|A][C|A:B]``, where ``A``, ``B`` and ``C`` are the names of
+        variables, ``A`` is a parent of ``B``, and both ``A`` and ``B`` are
+        parents of ``C`` (``A`` itself does not have any parents).
+
+        Returns
+        -------
+        __str__ : str
+            A string representation of the structure of this network.
+        """
+        return ''.join(str(v) for v in self.variables)
+
     def __getitem__(self, item):
         if isinstance(item, string_types):
             return self._variables[self._variable_indices[item]]
@@ -379,6 +395,21 @@ class Variable(object):
             The index of the specified value.
         """
         return self._value_indices[value]
+
+    def __str__(self):
+        """Return a string representation of this variable, including the names
+        of its parents.
+
+        Returns
+        -------
+        __str__ : str
+            A string representation of this variable.
+        """
+        if len(self.parent_indices) == 0:
+            return '[{}]'.format(self._name)
+
+        return '[{}|{}]'.format(self._name,
+                                ':'.join(p.name for p in self.parents))
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__)
