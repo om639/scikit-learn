@@ -24,10 +24,10 @@ class Network(object):
                                   enumerate(self.variables)}
 
         # Attach all variables to the network
-        for variable in self.variables:
+        for variable in self._variables:
             variable.attach(self)
 
-        n = len(self.variables)
+        n = len(self._variables)
 
         # Store edges as adjacency matrix
         self._parents = np.zeros((n, n), dtype=np.bool)
