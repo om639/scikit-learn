@@ -9,70 +9,6 @@ import numpy as np
 from collections import Counter
 
 
-def score(variable, data, parent_include=None, parent_exclude=None, cache=None):
-    """Compute the score for the given variable with respect to the given data.
-    The variable must be attached to some ``Network``,
-
-    Parameters
-    ----------
-    variable : ``Variable``
-        The variable to compute the score for.
-
-    data : ``numpy.array``
-        The data to use when computing the score. The data columns must be in
-        the same order as the variables in the network.
-
-    parent_include : int
-        The index of the variable in the network to include as an extra parent
-        when calculating the score.
-
-    parent_exclude : int
-        The index of the variable in the network to exclude from the parents
-        when calculating the score.
-
-    cache : dict of int to (dict of tuple to float)
-        The score cache to use. If None, do not use a cache and always calculate
-        the value.
-
-    Returns
-    -------
-    score : float
-        The score for ``variable`` given ``data``.
-    """
-    parents = variable.parent_indices
-
-    # Include extra parent index
-    if parent_include is not None:
-        # Maintain ordering of parent indices so they can be used as a cache key
-        parents = np.insert(parents, np.searchsorted(parents, parent_include),
-                            parent_include)
-
-    # Exclude parent index
-    if parent_exclude is not None:
-        parents = parents[parents != parent_exclude]
-    parents_key = tuple(parents)
-
-    # If score is cached, reuse it
-    if cache:
-        try:
-            return cache[variable.index][parents_key]
-        except KeyError:
-            pass
-
-    # TODO: allow user to change score function used
-    # Calculate the score if not cached
-    result = bic(variable, data, parents)
-
-    # Add calculated score to cache
-    if cache is not None:
-        try:
-            cache[variable.index][parents_key] = result
-        except KeyError:
-            cache[variable.index] = {parents_key: result}
-
-    return result
-
-
 def ll(variable, data, parents=None):
     """Compute the log-likelihood for the given variable with respect to the
     given data. The variable must be attached to some ``Network``.
@@ -182,3 +118,75 @@ def bic_network(network, data):
         The BIC score for ``network`` given ``data``.
     """
     return sum(bic(variable, data) for variable in network)
+
+
+def score(variable, data, func=bic, parent_include=None, parent_exclude=None,
+          cache=None):
+    """Compute the score for the given variable with respect to the given data.
+    The variable must be attached to some ``Network``,
+
+    Parameters
+    ----------
+    variable : ``Variable``
+        The variable to compute the score for.
+
+    data : ``numpy.array``
+        The data to use when computing the score. The data columns must be in
+        the same order as the variables in the network.
+
+    func : callable
+        The scoring function to use. Scoring functions provided by this package
+        include ``bic`` and ``ll`` (log-likelihood). User-provided scoring
+        functions can be used provided the score is decomposable and the scoring
+        function has the correct signature. See the signature of ``bic`` for
+        more information.
+
+    parent_include : int
+        The index of the variable in the network to include as an extra parent
+        when calculating the score.
+
+    parent_exclude : int
+        The index of the variable in the network to exclude from the parents
+        when calculating the score.
+
+    cache : dict of int to (dict of tuple to float)
+        The score cache to use. If None, do not use a cache and always calculate
+        the value. The caller is responsible for ensuring that the cache does
+        not become too large.
+
+    Returns
+    -------
+    score : float
+        The score for ``variable`` given ``data``.
+    """
+    parents = variable.parent_indices
+
+    # Include extra parent index
+    if parent_include is not None:
+        # Maintain ordering of parent indices so they can be used as a cache key
+        parents = np.insert(parents, np.searchsorted(parents, parent_include),
+                            parent_include)
+
+    # Exclude parent index
+    if parent_exclude is not None:
+        parents = parents[parents != parent_exclude]
+    parents_key = tuple(parents)
+
+    # If score is cached, reuse it
+    if cache:
+        try:
+            return cache[variable.index][parents_key]
+        except KeyError:
+            pass
+
+    # Calculate the score if not cached
+    result = func(variable, data, parents)
+
+    # Add calculated score to cache
+    if cache is not None:
+        try:
+            cache[variable.index][parents_key] = result
+        except KeyError:
+            cache[variable.index] = {parents_key: result}
+
+    return result
