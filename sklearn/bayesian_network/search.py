@@ -42,7 +42,7 @@ def hc(network, data):
         op, delta, *rest = max(ops, key=itemgetter(1))
 
         # If no improvement, abort
-        if not delta:
+        if delta <= 0:
             break
 
         # Apply op to network
