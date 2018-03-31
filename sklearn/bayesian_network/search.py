@@ -11,7 +11,8 @@ _OP_REMOVE = 1
 _OP_REVERSE = 2
 
 
-def hc(network, data):
+# noinspection PyTypeChecker
+def hc(network, data, use_cache=True):
     """Perform hill-climbing search on the specified network using the given
     data. The network is modified in-place.
 
@@ -23,6 +24,11 @@ def hc(network, data):
     data : ``numpy.array``
         The data to use for learning.
 
+    use_cache : ``bool``
+        Whether or not to use a score cache. Using a score cache can result in a
+        significant performance increase at the cost of increased memory usage.
+        Defaults to ``True``.
+
     Returns
     -------
     hc : float
@@ -33,28 +39,30 @@ def hc(network, data):
     score_initial = np.sum(scores)
 
     # Use a cache to speed up computation
-    cache = {}
+    cache = {} if use_cache else None
     while True:
-        ops = [(_OP_ADD, *max_add(network, data, scores, cache=cache)),
-               (_OP_REMOVE, *max_remove(network, data, scores, cache=cache)),
-               (_OP_REVERSE, *max_reverse(network, data, scores, cache=cache))]
-        # noinspection PyTypeChecker
-        op, delta, *rest = max(ops, key=itemgetter(1))
+        # Calculate maximum score increase for each operation
+        ops = [(_OP_ADD,) + max_add(network, data, scores, cache=cache),
+               (_OP_REMOVE,) + max_remove(network, data, scores, cache=cache),
+               (_OP_REVERSE,) + max_reverse(network, data, scores, cache=cache)]
+
+        # Get operation that results in the maximum score increase
+        op = max(ops, key=itemgetter(1))
 
         # If no improvement, abort
-        if delta <= 0:
+        if op[1] <= 0:
             break
 
         # Apply op to network
-        if op in (_OP_ADD, _OP_REMOVE):
-            edge, = rest
-            scores[edge[1]] += delta
-            if op == _OP_ADD:
+        if op[0] in (_OP_ADD, _OP_REMOVE):
+            edge = op[2]
+            scores[edge[1]] += op[1]
+            if op[0] == _OP_ADD:
                 network.add_edge(*edge)
             else:
                 network.remove_edge(*edge)
-        elif op == _OP_REVERSE:
-            deltas, edge = rest
+        elif op[0] == _OP_REVERSE:
+            deltas, edge = op[2], op[3]
             scores[edge[0]] += deltas[0]
             scores[edge[1]] += deltas[1]
             network.remove_edge(*edge)
