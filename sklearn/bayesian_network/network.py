@@ -131,6 +131,20 @@ class Network(object):
 
         return False
 
+    def copy(self):
+        """Return a copy of this network. All variables in the network are also
+        copied and attached to the new network. Edge operations on the new
+        network will have no effect on the original network.
+
+        Returns
+        -------
+        copy : ``Network``
+            A copy of this network.
+        """
+        n = Network([Variable(v.name, v.values) for v in self._variables])
+        n._parents = self._parents.copy()
+        return n
+
     @property
     def dimension(self):
         """Return the sum of the dimensions of all variables in this network.
@@ -141,6 +155,19 @@ class Network(object):
             The sum of dimensions for all variables in the network.
         """
         return sum(variable.dimension for variable in self.variables)
+
+    @property
+    def parents(self):
+        """Return a copy of the parent adjacency matrix of this network.
+
+
+        Returns
+        -------
+        parents : ``numpy.array``
+            A copy of the parent adjacency matrix of this network.
+        """
+        # Return a copy to prevent user from directly modifying parent matrix
+        return self._parents.copy()
 
     @property
     def variables(self):
@@ -202,6 +229,24 @@ class Network(object):
         non_parents, = np.where(self._parents[i] == 0)
         return non_parents
 
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__)
+                and len(self._variables) == len(other._variables)
+                and all(v == w for v, w in zip(self._variables,
+                                               other._variables))
+                and np.array_equal(self._parents, other._parents))
+
+    def __getitem__(self, item):
+        if isinstance(item, string_types):
+            return self._variables[self._variable_indices[item]]
+        return self._variables[item]
+
+    def __iter__(self):
+        return iter(self._variables)
+
+    def __len__(self):
+        return len(self._variables)
+
     def __str__(self):
         """Return a string representation of the structure of this network. The
         resulting string representation can then be used with bnlearn.
@@ -217,17 +262,6 @@ class Network(object):
             A string representation of the structure of this network.
         """
         return ''.join(str(v) for v in self.variables)
-
-    def __getitem__(self, item):
-        if isinstance(item, string_types):
-            return self._variables[self._variable_indices[item]]
-        return self._variables[item]
-
-    def __iter__(self):
-        return iter(self._variables)
-
-    def __len__(self):
-        return len(self._variables)
 
 
 class Variable(object):
@@ -396,6 +430,17 @@ class Variable(object):
         """
         return self._value_indices[value]
 
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__)
+                and self._name == other._name
+                and self._values == other._values)
+
+    def __hash__(self):
+        return hash((self.name, self.values))
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __str__(self):
         """Return a string representation of this variable, including the names
         of its parents.
@@ -410,14 +455,3 @@ class Variable(object):
 
         return '[{}|{}]'.format(self._name,
                                 ':'.join(p.name for p in self.parents))
-
-    def __eq__(self, other):
-        return (isinstance(other, self.__class__)
-                and self._name == other._name
-                and self._values == other._values)
-
-    def __hash__(self):
-        return hash((self.name, self.values))
-
-    def __ne__(self, other):
-        return not self.__eq__(other)

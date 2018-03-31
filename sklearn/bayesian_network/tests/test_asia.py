@@ -5,38 +5,47 @@ import numpy as np
 import os
 
 from sklearn.bayesian_network import Network, Variable, bic, bic_network, \
-    load_discrete, max_add, max_remove, max_reverse
-from sklearn.externals.six import iteritems
-from sklearn.utils.testing import assert_almost_equal, assert_equal, assert_greater
+    load_discrete, max_add, max_remove, max_reverse, hc
+from sklearn.utils.testing import assert_almost_equal, assert_equal, assert_greater, assert_true
 
-ASIA_NETWORK = {'VisitToAsia': (['no', 'yes'],
-                                []),
-                'Smoker': (['no', 'yes'],
-                           []),
-                'Tuberculosis': (['no', 'yes'],
-                                 ['VisitToAsia']),
-                'LungCancer': (['no', 'yes'],
-                               ['Smoker']),
-                'Bronchitis': (['no', 'yes'],
-                               ['Smoker']),
-                'TuberculosisOrCancer': (['no', 'yes'],
-                                         ['Tuberculosis', 'LungCancer']),
-                'X-ray': (['no', 'yes'],
-                          ['TuberculosisOrCancer']),
-                'Dyspnea': (['no', 'yes'],
-                            ['TuberculosisOrCancer', 'Bronchitis'])}
+ASIA_NETWORK = [('Smoker', ['no', 'yes'], []),
+                ('LungCancer', ['no', 'yes'], ['Smoker']),
+                ('VisitToAsia', ['no', 'yes'], []),
+                ('Tuberculosis', ['no', 'yes'], ['VisitToAsia']),
+                ('TuberculosisOrCancer', ['no', 'yes'], ['Tuberculosis', 'LungCancer']),
+                ('X-ray', ['no', 'yes'], ['TuberculosisOrCancer']),
+                ('Bronchitis', ['no', 'yes'], ['Smoker']),
+                ('Dyspnea', ['no', 'yes'], ['TuberculosisOrCancer', 'Bronchitis'])]
 
 ASIA_DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'asia.csv')
+
+ASIA_LEARNED = [[False, True, False, False, False, False, True, False],
+                [False, False, False, False, False, False, True, True],
+                [False, False, False, True, False, False, False, False],
+                [False, False, False, False, False, False, True, True],
+                [False, True, False, True, False, False, False, False],
+                [False, False, False, False, True, False, False, False],
+                [False, False, False, False, False, False, False, True],
+                [False, False, False, False, False, False, False, False]]
 
 
 def create_asia_network():
     """Create a ``Network`` modelling the Asia network."""
-    n = Network(Variable(name, values) for name, (values, _) in iteritems(ASIA_NETWORK))
+    n = Network(Variable(name, values) for name, values, _ in ASIA_NETWORK)
     # Add edges
-    for name, (_, parents) in iteritems(ASIA_NETWORK):
+    for name, _, parents in ASIA_NETWORK:
         for parent in parents:
             n.add_edge(n.variable_index(parent), n.variable_index(name))
     return n
+
+
+def test_asia_load_discrete():
+    # Test the load_discrete function for loading the Asia learning data
+    network = create_asia_network()
+    data = load_discrete(ASIA_DATA, network)
+
+    assert_true(isinstance(data, np.ndarray))
+    assert_equal(data.shape, (10000, 8))
 
 
 def test_asia_bic():
@@ -95,3 +104,13 @@ def test_asia_reverse():
     delta_total, delta, edge_add = max_reverse(network, data, scores)
     assert_equal(edge_add, edge[::-1])
     assert_greater(delta_total, 0)
+
+
+def test_asia_hc():
+    # Test that running hill-climbing on the Asia network produces the expected structure
+    network = Network(Variable(name, values) for name, values, _ in ASIA_NETWORK)
+    data = load_discrete(ASIA_DATA, network)
+
+    # Run hill climbing on the network
+    hc(network, data)
+    assert_true(np.array_equal(network.parents, ASIA_LEARNED))
