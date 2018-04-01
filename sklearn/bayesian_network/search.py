@@ -12,7 +12,7 @@ _OP_REVERSE = 2
 
 
 # noinspection PyTypeChecker
-def hc(network, data, use_cache=True):
+def hc(network, data, use_cache=True, debug=False):
     """Perform hill-climbing search on the specified network using the given
     data. The network is modified in-place.
 
@@ -28,6 +28,11 @@ def hc(network, data, use_cache=True):
         Whether or not to use a score cache. Using a score cache can result in a
         significant performance increase at the cost of increased memory usage.
         Defaults to ``True``.
+
+    debug : ``bool`
+        Whether to print debug information. Currently prints information about
+        the operation chosen during each cycle and the respective edges.
+        Defaults to ``False``.
 
     Returns
     -------
@@ -61,12 +66,19 @@ def hc(network, data, use_cache=True):
                 network.add_edge(*edge)
             else:
                 network.remove_edge(*edge)
+            if debug:
+                print('{} edge from {} -> {} with delta {}'.format(
+                    'adding' if op[0] == _OP_ADD else 'removing',
+                    edge[0], edge[1], op[1]))
         elif op[0] == _OP_REVERSE:
             deltas, edge = op[2], op[3]
             scores[edge[0]] += deltas[0]
             scores[edge[1]] += deltas[1]
             network.remove_edge(*edge)
             network.add_edge(*reversed(edge))
+            if debug:
+                print('reversing edge from {} -> {} with delta {}'.format(
+                    edge[0], edge[1], deltas[0] + deltas[1]))
     return np.sum(scores) - score_initial
 
 
@@ -99,11 +111,11 @@ def max_add(network, data, scores, cache=None):
     """
     max_delta = 0
     max_edge = None
-    for b, variable in enumerate(network):
-        for a in variable.not_parent_indices:
+    for a, _ in enumerate(network):
+        for b, variable in enumerate(network):
             # Make sure new edge would not cause cycle
             # Note this check will also prevent a loop
-            if network.causes_cycle(a, b):
+            if network.has_edge(a, b) or network.causes_cycle(a, b):
                 continue
 
             # Calculate the score as if an edge has been added from a to b
@@ -111,7 +123,9 @@ def max_add(network, data, scores, cache=None):
                           cache=cache) - scores[b]
 
             # Check if best solution
-            if delta > max_delta:
+            # np.isclose prevents floating-point arithmetic errors from having
+            # an effect on the edge that is chosen
+            if delta > max_delta and not np.isclose(delta, max_delta):
                 max_delta = delta
                 max_edge = (a, b)
     return max_delta, max_edge
@@ -154,7 +168,7 @@ def max_remove(network, data, scores, cache=None):
                           cache=cache) - scores[b]
 
             # Check if best solution
-            if delta > max_delta:
+            if delta > max_delta and not np.isclose(delta, max_delta):
                 max_delta = delta
                 max_edge = (a, b)
     return max_delta, max_edge
@@ -206,7 +220,8 @@ def max_reverse(network, data, scores, cache=None):
             delta_sum = sum(delta)
 
             # Check if best solution
-            if delta_sum > max_delta_sum:
+            if (delta_sum > max_delta_sum
+                    and not np.isclose(delta_sum, max_delta_sum)):
                 max_delta = delta
                 max_delta_sum = delta_sum
                 max_edge = (a, b)

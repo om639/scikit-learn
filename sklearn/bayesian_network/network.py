@@ -212,23 +212,6 @@ class Network(object):
         parents, = np.nonzero(self._parents[i])
         return parents
 
-    def not_parent_indices(self, i):
-        """Return the indices of the variables that are NOT parents of the
-        specified variable.
-
-        Parameters
-        ----------
-        i : int
-            The index of the variable to return the non-parent indices of.
-
-        Returns
-        -------
-        not_parent_indices : ``numpy.array``
-            The indices of the non-parent variables of the specified variable.
-        """
-        non_parents, = np.where(self._parents[i] == 0)
-        return non_parents
-
     def __eq__(self, other):
         return (isinstance(other, self.__class__)
                 and len(self._variables) == len(other._variables)
@@ -360,21 +343,6 @@ class Variable(object):
         return (self._network[i] for i in self.parent_indices)
 
     @property
-    def not_parents(self):
-        """
-        Return the non-parent variables of this variable in the network.
-
-        If this variable is not attached to a ``Network``, this property raises
-        an AttributeError.
-
-        Returns
-        -------
-        not_parents : generator of ``Variable``
-            The non-parent variables of the variable.
-        """
-        return (self._network[i] for i in self.not_parent_indices)
-
-    @property
     def parent_indices(self):
         """Return the indices of the parent variables of this variable in the
         network.
@@ -388,21 +356,6 @@ class Variable(object):
             The indices of the parent variables of the variable.
         """
         return self._network.parent_indices(self.index)
-
-    @property
-    def not_parent_indices(self):
-        """Return the indices of the variables that are NOT parents of this
-        variable in the network.
-
-        If this variable is not attached to a ``Network``, this property raises
-        an AttributeError.
-
-        Returns
-        -------
-        not_parent_indices : ``numpy.array``
-            The indices of the non-parent variables of the variable.
-        """
-        return self._network.not_parent_indices(self.index)
 
     @property
     def values(self):

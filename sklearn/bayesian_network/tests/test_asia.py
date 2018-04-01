@@ -19,14 +19,14 @@ ASIA_NETWORK = [('Smoker', ['no', 'yes'], []),
 
 ASIA_DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'asia.csv')
 
-ASIA_LEARNED = [[False, True, False, False, False, False, True, False],
-                [False, False, False, False, False, False, True, True],
-                [False, False, False, True, False, False, False, False],
-                [False, False, False, False, False, False, True, True],
+ASIA_LEARNED = [[False, False, False, False, False, False, False, False],
+                [True, False, False, False, False, False, False, False],
+                [False, False, False, False, False, False, False, False],
+                [False, False, True, False, False, False, False, False],
                 [False, True, False, True, False, False, False, False],
                 [False, False, False, False, True, False, False, False],
-                [False, False, False, False, False, False, False, True],
-                [False, False, False, False, False, False, False, False]]
+                [True, False, False, False, False, False, False, False],
+                [False, False, False, False, True, False, True, False]]
 
 
 def create_asia_network():
