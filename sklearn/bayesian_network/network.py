@@ -154,7 +154,7 @@ class Network(object):
         dimension : int
             The sum of dimensions for all variables in the network.
         """
-        return sum(variable.dimension for variable in self.variables)
+        return sum(variable.dimension() for variable in self.variables)
 
     @property
     def parents(self):

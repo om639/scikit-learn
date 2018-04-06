@@ -57,6 +57,20 @@ def test_asia_bic():
     assert_almost_equal(bic_network(network, data), -22295.74566143257)
 
 
+def test_asia_dimension():
+    # Test the dimension of the Asia network
+    network = create_asia_network()
+    assert_equal(network.dimension, 18)
+
+
+def test_asia_str():
+    # Test the string representation of the Asia network
+    network = create_asia_network()
+    assert_equal(str(network), '[Smoker][LungCancer|Smoker][VisitToAsia][Tuberculosis|VisitToAsia]['
+                               'TuberculosisOrCancer|LungCancer:Tuberculosis][X-ray|TuberculosisOrCancer]['
+                               'Bronchitis|Smoker][Dyspnea|TuberculosisOrCancer:Bronchitis]')
+
+
 def test_asia_add():
     # Test that max_add returns the correct edge to add in a near-correct Asia network
     network = create_asia_network()
