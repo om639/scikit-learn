@@ -2,7 +2,8 @@
 Testing for ``Network`` and ``Variable`` functionality.
 """
 from sklearn.bayesian_network import Network, Variable
-from sklearn.utils.testing import assert_true, assert_false, assert_in, assert_not_in, assert_raises, assert_equal
+from sklearn.utils.testing import assert_true, assert_false, assert_in, \
+    assert_not_in, assert_raises, assert_equal
 
 
 def test_add_remove_edge():
@@ -24,7 +25,8 @@ def test_add_remove_edge():
 
 def test_add_edge_cycle():
     # Test that adding a new edge raises an error if a cycle would be created
-    n = Network([Variable('test_{}'.format(i), ['false', 'true']) for i in range(3)])
+    n = Network(
+        [Variable('test_{}'.format(i), ['false', 'true']) for i in range(3)])
     n.add_edge(0, 1)
     n.add_edge(1, 2)
     with assert_raises(ValueError):
@@ -33,7 +35,8 @@ def test_add_edge_cycle():
 
 def test_reverse_edge_cycle():
     # Test causes_cycle works when using reverse=True
-    n = Network([Variable('test_{}'.format(i), ['false', 'true']) for i in range(3)])
+    n = Network(
+        [Variable('test_{}'.format(i), ['false', 'true']) for i in range(3)])
     n.add_edge(0, 1)
     n.add_edge(0, 2)
     n.add_edge(1, 2)

@@ -102,8 +102,8 @@ class Network(object):
             The index of the variable to test to.
 
         reversal : bool
-            True to ignore an existing arc from ``b`` to ``a`` when checking for
-            cycles. Used to check whether an arc can be reversed.
+            True to ignore an existing arc from ``b`` to ``a`` when checking
+            for cycles. Used to check whether an arc can be reversed.
 
         Returns
         -------

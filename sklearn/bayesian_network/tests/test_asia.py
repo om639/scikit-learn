@@ -6,18 +6,22 @@ import os
 
 from sklearn.bayesian_network import Network, Variable, bic, bic_network, \
     load_discrete, max_add, max_remove, max_reverse, hc
-from sklearn.utils.testing import assert_almost_equal, assert_equal, assert_greater, assert_true
+from sklearn.utils.testing import assert_almost_equal, assert_equal, \
+    assert_greater, assert_true
 
 ASIA_NETWORK = [('Smoker', ['no', 'yes'], []),
                 ('LungCancer', ['no', 'yes'], ['Smoker']),
                 ('VisitToAsia', ['no', 'yes'], []),
                 ('Tuberculosis', ['no', 'yes'], ['VisitToAsia']),
-                ('TuberculosisOrCancer', ['no', 'yes'], ['Tuberculosis', 'LungCancer']),
+                ('TuberculosisOrCancer', ['no', 'yes'],
+                 ['Tuberculosis', 'LungCancer']),
                 ('X-ray', ['no', 'yes'], ['TuberculosisOrCancer']),
                 ('Bronchitis', ['no', 'yes'], ['Smoker']),
-                ('Dyspnea', ['no', 'yes'], ['TuberculosisOrCancer', 'Bronchitis'])]
+                ('Dyspnea', ['no', 'yes'],
+                 ['TuberculosisOrCancer', 'Bronchitis'])]
 
-ASIA_DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'asia.csv')
+ASIA_DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data',
+                         'asia.csv')
 
 ASIA_LEARNED = [[False, False, False, False, False, False, False, False],
                 [True, False, False, False, False, False, False, False],
@@ -66,18 +70,22 @@ def test_asia_dimension():
 def test_asia_str():
     # Test the string representation of the Asia network
     network = create_asia_network()
-    assert_equal(str(network), '[Smoker][LungCancer|Smoker][VisitToAsia][Tuberculosis|VisitToAsia]['
-                               'TuberculosisOrCancer|LungCancer:Tuberculosis][X-ray|TuberculosisOrCancer]['
-                               'Bronchitis|Smoker][Dyspnea|TuberculosisOrCancer:Bronchitis]')
+    assert_equal(str(network),
+                 '[Smoker][LungCancer|Smoker][VisitToAsia]'
+                 '[Tuberculosis|VisitToAsia][TuberculosisOrCancer|LungCancer:'
+                 'Tuberculosis][X-ray|TuberculosisOrCancer]['
+                 'Bronchitis|Smoker][Dyspnea|TuberculosisOrCancer:Bronchitis]')
 
 
 def test_asia_add():
-    # Test that max_add returns the correct edge to add in a near-correct Asia network
+    # Test that max_add returns the correct edge to add in a near-correct Asia
+    # network
     network = create_asia_network()
     data = load_discrete(ASIA_DATA, network)
 
     # Remove edge from LungCancer to TuberculosisOrCancer
-    edge = (network.variable_index('LungCancer'), network.variable_index('TuberculosisOrCancer'))
+    edge = (network.variable_index('LungCancer'),
+            network.variable_index('TuberculosisOrCancer'))
     network.remove_edge(*edge)
     scores = np.array([bic(variable, data) for variable in network])
 
@@ -88,12 +96,14 @@ def test_asia_add():
 
 
 def test_asia_remove():
-    # Test that max_remove returns the correct edge to remove in a near-correct Asia network
+    # Test that max_remove returns the correct edge to remove in a near-correct
+    # Asia network
     network = create_asia_network()
     data = load_discrete(ASIA_DATA, network)
 
     # Add false edge from Bronchitis to TuberculosisOrCancer
-    edge = (network.variable_index('Bronchitis'), network.variable_index('TuberculosisOrCancer'))
+    edge = (network.variable_index('Bronchitis'),
+            network.variable_index('TuberculosisOrCancer'))
     network.add_edge(*edge)
     scores = np.array([bic(variable, data) for variable in network])
 
@@ -104,12 +114,14 @@ def test_asia_remove():
 
 
 def test_asia_reverse():
-    # Test that max_reverse returns the correct edge to reverse in a near-correct Asia network
+    # Test that max_reverse returns the correct edge to reverse in a
+    # near-correct Asia network
     network = create_asia_network()
     data = load_discrete(ASIA_DATA, network)
 
     # Reverse edge from Tuberculosis to TuberculosisOrCancer
-    edge = (network.variable_index('Tuberculosis'), network.variable_index('TuberculosisOrCancer'))
+    edge = (network.variable_index('Tuberculosis'),
+            network.variable_index('TuberculosisOrCancer'))
     network.remove_edge(*edge)
     network.add_edge(*edge[::-1])
     scores = np.array([bic(variable, data) for variable in network])
@@ -121,8 +133,10 @@ def test_asia_reverse():
 
 
 def test_asia_hc():
-    # Test that running hill-climbing on the Asia network produces the expected structure
-    network = Network(Variable(name, values) for name, values, _ in ASIA_NETWORK)
+    # Test that running hill-climbing on the Asia network produces the expected
+    # structure
+    network = Network(
+        Variable(name, values) for name, values, _ in ASIA_NETWORK)
     data = load_discrete(ASIA_DATA, network)
 
     # Run hill climbing on the network

@@ -25,9 +25,9 @@ def hc(network, data, use_cache=True, debug=False):
         The data to use for learning.
 
     use_cache : ``bool``
-        Whether or not to use a score cache. Using a score cache can result in a
-        significant performance increase at the cost of increased memory usage.
-        Defaults to ``True``.
+        Whether or not to use a score cache. Using a score cache can result in
+        a significant performance increase at the cost of increased memory
+        usage. Defaults to ``True``.
 
     debug : ``bool`
         Whether to print debug information. Currently prints information about
@@ -47,9 +47,10 @@ def hc(network, data, use_cache=True, debug=False):
     cache = {} if use_cache else None
     while True:
         # Calculate maximum score increase for each operation
-        ops = [(_OP_ADD,) + max_add(network, data, scores, cache=cache),
-               (_OP_REMOVE,) + max_remove(network, data, scores, cache=cache),
-               (_OP_REVERSE,) + max_reverse(network, data, scores, cache=cache)]
+        ops = [
+            (_OP_ADD,) + max_add(network, data, scores, cache=cache),
+            (_OP_REMOVE,) + max_remove(network, data, scores, cache=cache),
+            (_OP_REVERSE,) + max_reverse(network, data, scores, cache=cache)]
 
         # Get operation that results in the maximum score increase
         op = max(ops, key=itemgetter(1))

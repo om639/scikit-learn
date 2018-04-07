@@ -6,8 +6,8 @@ import numpy as np
 
 
 def load_discrete(file, network):
-    """Load a properly-formed CSV file ``file`` into a ``numpy.array`` using the
-    variable order and value indices of ``network``.
+    """Load a properly-formed CSV file ``file`` into a ``numpy.array`` using
+    the variable order and value indices of ``network``.
 
     The returned ``numpy.array`` will contain N rows and M columns, where N is
     the number of data rows in the CSV file and M is the number of variables
@@ -15,13 +15,13 @@ def load_discrete(file, network):
 
     The data items in each row in the returned array will be ordered according
     to the ordering of the variables in ``network``. Additionally, each row in
-    the CSV file will have its values in the array replaced by the corresponding
-    value index as given by ``Variable.value_index`` for the corresponding
-    variable.
+    the CSV file will have its values in the array replaced by the
+    corresponding value index as given by ``Variable.value_index`` for the
+    corresponding variable.
 
     The input CSV file must contain a header row whose names correspond to the
-    names of the variables in ``network`` (although they do not necessarily have
-    to be in the same order).
+    names of the variables in ``network`` (although they do not necessarily
+    have to be in the same order).
 
     Parameters
     ----------

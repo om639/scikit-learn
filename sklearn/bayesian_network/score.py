@@ -19,8 +19,8 @@ def ll(variable, data, parents=None):
         The variable to compute the log-likelihood for.
 
     data : ``numpy.array``
-        The data to use when computing the log-likelihood. The data columns must
-        be in the same order as the variables in the network.
+        The data to use when computing the log-likelihood. The data columns
+        must be in the same order as the variables in the network.
 
     parents : ``numpy.array``
         The indices of the parent variables to use for the variable. If None,
@@ -61,8 +61,8 @@ def ll_network(network, data):
         The network to compute the log-likelihood for.
 
     data : ``numpy.array``
-        The data to use when computing the log-likelihood. The data columns must
-        be in the same order as the variables in the network.
+        The data to use when computing the log-likelihood. The data columns
+        must be in the same order as the variables in the network.
 
     Returns
     -------
@@ -137,9 +137,9 @@ def score(variable, data, func=bic, parent_include=None, parent_exclude=None,
     func : callable
         The scoring function to use. Scoring functions provided by this package
         include ``bic`` and ``ll`` (log-likelihood). User-provided scoring
-        functions can be used provided the score is decomposable and the scoring
-        function has the correct signature. See the signature of ``bic`` for
-        more information.
+        functions can be used provided the score is decomposable and the
+        scoring function has the correct signature. See the signature of
+        ``bic`` for more information.
 
     parent_include : int
         The index of the variable in the network to include as an extra parent
@@ -150,9 +150,9 @@ def score(variable, data, func=bic, parent_include=None, parent_exclude=None,
         when calculating the score.
 
     cache : dict of int to (dict of tuple to float)
-        The score cache to use. If None, do not use a cache and always calculate
-        the value. The caller is responsible for ensuring that the cache does
-        not become too large.
+        The score cache to use. If None, do not use a cache and always
+        calculate the value. The caller is responsible for ensuring that the
+        cache does not become too large.
 
     Returns
     -------
@@ -163,7 +163,7 @@ def score(variable, data, func=bic, parent_include=None, parent_exclude=None,
 
     # Include extra parent index
     if parent_include is not None:
-        # Maintain ordering of parent indices so they can be used as a cache key
+        # Maintain ordering of parent indices so they can be used as cache key
         parents = np.insert(parents, np.searchsorted(parents, parent_include),
                             parent_include)
 
