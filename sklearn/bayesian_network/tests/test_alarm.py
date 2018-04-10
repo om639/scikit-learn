@@ -260,7 +260,7 @@ def create_alarm_network():
 
 
 def test_alarm_load_discrete():
-    # Test the load_discrete function for loading the Asia learning data
+    # Test the load_discrete function for loading the ALARM learning data
     network = create_alarm_network()
     data = load_discrete(ALARM_DATA, network)
 
