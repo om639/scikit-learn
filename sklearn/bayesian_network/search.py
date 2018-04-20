@@ -4,7 +4,7 @@ Hill-climbing structure learning for Bayesian networks.
 import numpy as np
 
 from operator import itemgetter
-from sklearn.bayesian_network.score import score
+from sklearn.bayesian_network.score import score, bic
 
 _OP_ADD = 0
 _OP_REMOVE = 1
@@ -12,7 +12,7 @@ _OP_REVERSE = 2
 
 
 # noinspection PyTypeChecker
-def hc(network, data, use_cache=True, debug=False):
+def hc(network, data, func=bic, use_cache=True, debug=False):
     """Perform hill-climbing search on the specified network using the given
     data. The network is modified in-place.
 
@@ -23,6 +23,13 @@ def hc(network, data, use_cache=True, debug=False):
 
     data : ``numpy.array``
         The data to use for learning.
+
+    func : callable
+        The scoring function to use. Scoring functions provided by this package
+        include ``bic`` and ``ll`` (log-likelihood). User-provided scoring
+        functions can be used provided the score is decomposable and the
+        scoring function has the correct signature. See the signature of
+        ``bic`` for more information.
 
     use_cache : ``bool``
         Whether or not to use a score cache. Using a score cache can result in
@@ -48,9 +55,12 @@ def hc(network, data, use_cache=True, debug=False):
     while True:
         # Calculate maximum score increase for each operation
         ops = [
-            (_OP_ADD,) + max_add(network, data, scores, cache=cache),
-            (_OP_REMOVE,) + max_remove(network, data, scores, cache=cache),
-            (_OP_REVERSE,) + max_reverse(network, data, scores, cache=cache)]
+            (_OP_ADD,) + max_add(network, data, scores, func=func,
+                                 cache=cache),
+            (_OP_REMOVE,) + max_remove(network, data, scores, func=func,
+                                       cache=cache),
+            (_OP_REVERSE,) + max_reverse(network, data, scores, func=func,
+                                         cache=cache)]
 
         # Get operation that results in the maximum score increase
         op = max(ops, key=itemgetter(1))
@@ -83,7 +93,7 @@ def hc(network, data, use_cache=True, debug=False):
     return np.sum(scores) - score_initial
 
 
-def max_add(network, data, scores, cache=None):
+def max_add(network, data, scores, func=bic, cache=None):
     """Find the edge addition that will result in the largest score increase in
     the specified network.
 
@@ -97,6 +107,13 @@ def max_add(network, data, scores, cache=None):
 
     scores : ``numpy.array``
         The current scores for each variable in the network.
+
+    func : callable
+        The scoring function to use. Scoring functions provided by this package
+        include ``bic`` and ``ll`` (log-likelihood). User-provided scoring
+        functions can be used provided the score is decomposable and the
+        scoring function has the correct signature. See the signature of
+        ``bic`` for more information.
 
     cache : dict of int to (dict of tuple to float)
         The score cache to use. If None, do not use a cache.
@@ -120,7 +137,7 @@ def max_add(network, data, scores, cache=None):
                 continue
 
             # Calculate the score as if an edge has been added from a to b
-            delta = score(variable, data, parent_include=a,
+            delta = score(variable, data, func=func, parent_include=a,
                           cache=cache) - scores[b]
 
             # Check if best solution
@@ -132,7 +149,7 @@ def max_add(network, data, scores, cache=None):
     return max_delta, max_edge
 
 
-def max_remove(network, data, scores, cache=None):
+def max_remove(network, data, scores, func=bic, cache=None):
     """Find the edge removal that will result in the largest score increase in
     the specified network.
 
@@ -146,6 +163,13 @@ def max_remove(network, data, scores, cache=None):
 
     scores : ``numpy.array``
         The current scores for each variable in the network.
+
+    func : callable
+        The scoring function to use. Scoring functions provided by this package
+        include ``bic`` and ``ll`` (log-likelihood). User-provided scoring
+        functions can be used provided the score is decomposable and the
+        scoring function has the correct signature. See the signature of
+        ``bic`` for more information.
 
     cache : dict of int to (dict of tuple to float)
         The score cache to use. If None, do not use a cache.
@@ -165,7 +189,7 @@ def max_remove(network, data, scores, cache=None):
     for b, variable in enumerate(network):
         for a in variable.parent_indices:
             # Calculate the score as if edge from a to b has been removed
-            delta = score(variable, data, parent_exclude=a,
+            delta = score(variable, data, func=func, parent_exclude=a,
                           cache=cache) - scores[b]
 
             # Check if best solution
@@ -175,7 +199,7 @@ def max_remove(network, data, scores, cache=None):
     return max_delta, max_edge
 
 
-def max_reverse(network, data, scores, cache=None):
+def max_reverse(network, data, scores, func=bic, cache=None):
     """Find the edge reversal that will result in the largest score increase in
     the specified network.
 
@@ -189,6 +213,13 @@ def max_reverse(network, data, scores, cache=None):
 
     scores : ``numpy.array``
         The current scores for each variable in the network.
+
+    func : callable
+        The scoring function to use. Scoring functions provided by this package
+        include ``bic`` and ``ll`` (log-likelihood). User-provided scoring
+        functions can be used provided the score is decomposable and the
+        scoring function has the correct signature. See the signature of
+        ``bic`` for more information.
 
     cache : dict of int to (dict of tuple to float)
         The score cache to use. If None, do not use a cache.
@@ -214,9 +245,9 @@ def max_reverse(network, data, scores, cache=None):
         for a in variable.parent_indices:
             if network.causes_cycle(b, a, reversal=True):
                 continue
-            delta = (score(network[a], data, parent_include=b,
+            delta = (score(network[a], data, func=func, parent_include=b,
                            cache=cache) - scores[a],
-                     score(variable, data, parent_exclude=a,
+                     score(variable, data, func=func, parent_exclude=a,
                            cache=cache) - scores[b])
             delta_sum = sum(delta)
 
