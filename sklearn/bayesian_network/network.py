@@ -116,9 +116,9 @@ class Network(object):
         current = deque([a])
         visited = {a}
 
-        # Do BFS to check for path
+        # Do DFS to check for path
         while current:
-            v = current.popleft()
+            v = current.pop()
             for p in self.parent_indices(v):
                 if reversal and v == a and p == b:
                     # If reversing, pretend arc doesn't exist
